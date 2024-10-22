@@ -1,23 +1,20 @@
-GREP = my_grep
-CC = gcc
-FLAGS = -Wall -Werror -Wextra -std=c11
+GCC := gcc
+CCFLAGS := -Wall -Werror -Wextra -std=c11
 
-$(GREP): main.o grep_functions.o
-	$(CC) $(FLAGS) main.o grep_functions.o -o $(GREP)
+.PHONY: all clang_check clean rebuild
 
-main.o: main.c grep_functions.h
-	$(CC) $(FLAGS) -c main.c -o main.o
+all: clang_check s21_grep
 
-grep_functions.o: grep_functions.c grep_functions.h
-	$(CC) $(FLAGS) -c grep_functions.c -o grep_functions.o
+s21_grep:
+	$(CC) $(CCFLAGS) -o $@ ./*.c
+
+test: s21_grep
+	bash run_grep_test.sh
+
+clang_check:
+	clang-format -style=Google -n ./*.h ./*.c
 
 clean:
-	rm $(GREP) *.o
+	rm s21_grep
 
-rebuild: clean $(GREP)
-
-test: grep_test.sh
-	bash grep_test.sh
-
-style_test:
-	clang-format -style=Google -n *.c *.h
+rebuild: clean s21_grep

@@ -1,4 +1,0 @@
-    cat dog     banana
-        rat - verter
-
-    123

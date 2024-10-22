@@ -1,133 +1,183 @@
-#include "cat_functions.h"
+#include "./s21_cat.h"
 
-void work_with_arguments(int argc, char **argv) {
-  Option_flags flags = {0};
-  int check;
+int handling_keys(S21_Options_Flags* const options, int argc, char** argv) {
+  int keys_status = kNo_Error;
 
-  check = get_flags(argc, argv, &flags);
-
-  if (check) {
-    int file_index = get_file_index(argc, argv);
-    if (file_index) {
-      print_file(flags, file_index, argc, argv);
-    } else
-      fprintf(stderr, "ERROR: No files\n");
-  } else
-    fprintf(stderr, "usage: ./s21_cat [-benstvTE] [file ...]\n");
-}
-
-int get_flags(int argc, char **argv, Option_flags *opt_flags) {
-  struct option long_options[] = {{"number-nonblank", no_argument, NULL, 'b'},
+  const char* opts = "+benstvET";
+  const struct option opts_l[] = {{"number-nonblank", no_argument, NULL, 'b'},
                                   {"number", no_argument, NULL, 'n'},
                                   {"squeeze-blank", no_argument, NULL, 's'},
                                   {0, 0, 0, 0}};
 
-  int check_flags = 1;
-  char flag;
-
-  while ((flag = getopt_long(argc, argv, "+benstvET", long_options, NULL)) !=
-         -1) {
-    switch (flag) {
-      case 'b':
-        opt_flags->opt_b = 1;
-        break;
-      case 'e':
-        opt_flags->opt_e = 1;
-        opt_flags->opt_v = 1;
-        break;
-      case 'n':
-        opt_flags->opt_n = 1;
-        break;
-      case 's':
-        opt_flags->opt_s = 1;
-        break;
-      case 't':
-        opt_flags->opt_t = 1;
-        opt_flags->opt_v = 1;
-        break;
-      case 'v':
-        opt_flags->opt_v = 1;
-        break;
-      case 'E':
-        opt_flags->opt_e = 1;
-        opt_flags->opt_v = 0;
-        break;
-      case 'T':
-        opt_flags->opt_t = 1;
-        opt_flags->opt_v = 0;
-        break;
-      default:
-        check_flags = 0;
-        break;
-    }
+  int val;
+  while (keys_status == kNo_Error &&
+         (-1 != (val = getopt_long(argc, argv, opts, opts_l, NULL)))) {
+    keys_status = parsing_keys(options, val);
   }
-  return check_flags;
+
+  return keys_status;
 }
 
-int get_file_index(int argc, char **argv) {
-  int index = NOFILE;
+int parsing_keys(S21_Options_Flags* const options, int value) {
+  int key_status = kNo_Error;
 
-  for (int i = 1; i < argc; i++) {
-    if (argv[i][0] != '-') {
-      index = i;
+  opterr = 0;
+  switch (value) {
+    case 'b':
+      options->flag_b = 1;
       break;
+    case 'n':
+      options->flag_n = 1;
+      break;
+    case 's':
+      options->flag_s = 1;
+      break;
+    case 't':
+      options->flag_t = 1;
+      options->flag_v = 1;
+      break;
+    case 'e':
+      options->flag_e = 1;
+      options->flag_v = 1;
+      break;
+    case 'v':
+      options->flag_v = 1;
+      break;
+    case 'E':
+      options->flag_e = 1;
+      break;
+    case 'T':
+      options->flag_t = 1;
+      break;
+    case '?':
+    default:
+      key_status = kInvalid_Key;
+      fprintf(stderr, "s21_cat: invalid option -- '%c'\n", optopt);
+      break;
+  }
+
+  return key_status;
+}
+
+void handling_data(int argc, char** argv, S21_Options_Flags* const opt) {
+  int file_index = -1;
+  int files_status = get_file_index(argc, argv, &file_index);
+
+  if (files_status == kNo_Error) {
+    print_data_from_file(argc, argv, opt, file_index);
+  } else {
+    print_data_with_keys(stdin, opt);
+  }
+}
+
+int get_file_index(int argc, char** argv, int* index) {
+  int status = kInvalid_Files;
+
+  for (int i = 1; i < argc && status == kInvalid_Files; ++i) {
+    if (argv[i][0] != '-') {
+      status = kNo_Error;
+      *index = i;
     }
   }
 
-  return index;
+  return status;
 }
 
-void print_file(Option_flags flags, int file_index, int argc, char **argv) {
-  FILE *fp = NULL;
+void print_data_from_file(int argc, char** argv, S21_Options_Flags* const opt,
+                          int index) {
+  for (; index < argc; ++index) {
+    FILE* fp = fopen(argv[index], "r");
 
-  while (file_index < argc) {
-    if ((fp = fopen(argv[file_index], "r")) != NULL) {
-      print_file_with_flags(fp, &flags);
+    if (fp == NULL) {
+      fprintf(stderr, "s21_cat: %s: No such file ordirectory\n", argv[index]);
+    } else {
+      print_data_with_keys(fp, opt);
       fclose(fp);
-    } else
-      fprintf(stderr, "./s21_cat: %s: No such file or directory\n",
-              argv[file_index]);
-
-    file_index++;
+    }
   }
 }
 
-void print_file_with_flags(FILE *file, Option_flags *flags) {
-  int cur_ch = '\n';
-  int past_ch = '\n';
-
-  int lines_counter = 1;
-  int line_status = 1;
+void print_data_with_keys(FILE* const filename, S21_Options_Flags* const opt) {
+  int cur_ch = S21_NL_CHAR, past_ch = S21_NL_CHAR;
+  int line_status = S21_NEW_LINE;
+  static int lines_counter = 1;
   int squeeze_counter = 0;
 
-  while ((cur_ch = fgetc(file)) != EOF) {
-    if (flags->opt_s && past_ch == '\n' && cur_ch == '\n')
-      squeeze_counter++;
-    else
-      squeeze_counter = 0;
+  if (opt->flag_b) {
+    opt->flag_n = 0;
+  }
 
-    if (squeeze_counter < 2) {
-      if ((flags->opt_n && flags->opt_b == 0 && line_status == 1) ||
-          (flags->opt_b && line_status == 1 && cur_ch != '\n')) {
-        printf("%6d\t", lines_counter++);
-        line_status = 0;
+  while ((cur_ch = fgetc(filename)) != EOF) {
+    if (opt->flag_s) {
+      if (check_squeeze_lines(cur_ch, past_ch, &squeeze_counter)) {
+        continue;
       }
-      if (flags->opt_t && cur_ch == '\t') {
-        printf("^");
-        cur_ch = 'I';
-      }
-      if (flags->opt_e && cur_ch == '\n') printf("$");
-      if (flags->opt_v && ((cur_ch < 32 && cur_ch != '\n' && cur_ch != '\t') ||
-                           cur_ch == 127)) {
-        printf("^");
-      }
-      if ((cur_ch < 32 || (cur_ch > 126 && cur_ch < 160)) && cur_ch != '\n' &&
-          cur_ch != '\t') {
-        cur_ch = (cur_ch > 126 ? cur_ch - 64 : cur_ch + 64);
-      }
-      printf("%c", cur_ch);
-      past_ch = cur_ch;
-      line_status = (cur_ch == '\n' ? 1 : 0);
     }
+
+    if (opt->flag_b || opt->flag_n) {
+      print_line_count(cur_ch, &lines_counter, line_status, opt);
+    }
+
+    if (opt->flag_t) {
+      processing_opt_t(&cur_ch);
+    }
+
+    if (opt->flag_e) {
+      processing_opt_e(cur_ch);
+    }
+
+    if (opt->flag_v) {
+      processing_opt_v(&cur_ch);
+    }
+
+    printf("%c", cur_ch);
+    past_ch = cur_ch;
+    line_status = (cur_ch == S21_NL_CHAR ? S21_NEW_LINE : S21_SAME_LINE);
+  }
+}
+
+int check_squeeze_lines(int cur, int prev, int* counter) {
+  if (cur == S21_NL_CHAR && prev == S21_NL_CHAR) {
+    *counter += 1;
+  } else {
+    *counter = 0;
+  }
+
+  return (*counter > 1 ? 1 : 0);
+}
+
+void print_line_count(int cur, int* counter, int new_line,
+                      const S21_Options_Flags* const opt) {
+  if (opt->flag_b) {
+    if (cur != S21_NL_CHAR && new_line) {
+      printf("%6d\t", (*counter)++);
+    }
+  } else {
+    if (new_line) {
+      printf("%6d\t", (*counter)++);
+    }
+  }
+}
+
+void processing_opt_t(int* cur) {
+  if (*cur == S21_TAB) {
+    printf("^");
+    *cur = 'I';
+  }
+}
+
+void processing_opt_e(int cur) {
+  if (cur == S21_NL_CHAR) {
+    printf("$");
+  }
+}
+
+void processing_opt_v(int* cur) {
+  if ((*cur >= 0 && *cur < 9) || (*cur > 10 && *cur < 32)) {
+    *cur += 64;
+    printf("^");
+  } else if (*cur == 127) {
+    *cur = 63;
+    printf("^");
   }
 }

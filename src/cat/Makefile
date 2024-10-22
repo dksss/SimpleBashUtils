@@ -1,23 +1,20 @@
-CAT = my_cat
-CC = gcc
-FLAGS = -Wall -Werror -Wextra -std=c11
+GCC := gcc
+CCFLAGS := -Wall -Werror -Wextra -std=c11
 
-$(CAT) : my_cat.o cat_functions.o
-	$(CC) $(FLAGS) my_cat.o cat_functions.o -o $(CAT)
+.PHONY: all clang_check clean rebuild
 
-my_cat.o : main.c cat_functions.h
-	$(CC) $(FLAGS) -c main.c -o my_cat.o
+all: clang_check s21_cat
 
-cat_functions.o : cat_functions.c cat_functions.h
-	$(CC) $(FLAGS) -c cat_functions.c -o cat_functions.o
+s21_cat:
+	$(CC) $(CCFLAGS) -o $@ ./*.c
 
-clean :
-	rm $(CAT) *.o
+test: s21_cat
+	bash run_cat_test.sh
 
-rebuild: clean $(CAT)
+clang_check:
+	clang-format -style=Google -n ./*.h ./*.c
 
-test: cat_tests.sh
-	bash cat_tests.sh
+clean:
+	rm s21_cat
 
-style_test:
-	clang-format -style=Google -n *.c
+rebuild: clean all

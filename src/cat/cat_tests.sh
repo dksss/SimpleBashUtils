@@ -1,94 +1,456 @@
-#!/bin/bash
+SUCCESS=0 FAIL=0 COUNTER=0
+RED=$"\033[91m" GREEN=$"\033[92m"
+MY_UTIL_NAME=s21_cat ORIGINAL_UTIL_NAME=cat
+files=(./test_files/test1.txt ./test_files/test2.txt ./test_files/test3.txt ./test_files/test4.txt)
+flags=(-b -n -s -v -e -t)
 
-SUCCESS=0
-FAIL=0
-COUNTER=0
+# 1 флаг 1 файл
 
-test_files=("test_files/1.txt" "test_files/2.txt" "test_files/3.txt" "test_files/4.txt" "test_files/5.txt")
-
-flags=("b" "e" "n" "s" "t")
-
-# 1 file 1 flag
-for file in "${test_files[@]}"
+for file in "${files[@]}"
 do
-    for flag1 in "${flags[@]}"
+    for flag in "${flags[@]}"
     do
-        echo "$flag1 $file1:"
-        ./my_cat "-$flag1" "$file" > my_cat_output.txt
-        cat "-$flag1" "$file" > cat_output.txt
-        if diff -q my_cat_output.txt cat_output.txt > /dev/null 2>&1;
+        MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag $file"
+        ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag $file"
+        $MY_UTIL_COMMAND > my_util_result.txt
+        $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+        if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
         then
+            printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
             let "COUNTER++"
             let "SUCCESS++"
-            echo "$COUNTER - Success"
+            printf "%s\n\n" "$COUNTER - SUCCESS"
         else
+            printf "$RED%s\n" "$MY_UTIL_COMMAND"
             let "COUNTER++"
             let "FAIL++"
-            echo "$COUNTER - Fail"
+            printf "$RED%s\n\n" "$COUNTER - FAIL"
         fi
-        rm my_cat_output.txt cat_output.txt
+        rm my_util_result.txt
+        rm original_util_result.txt
     done
 done
 
-# 2 file 2 flags
-for file1 in "${test_files[@]}"
+# 1 флаг и несколько файлов
+
+for flag in "${flags[@]}"
 do
-    for file2 in "${test_files[@]}"
+    MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag ${files[@]}"
+    ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag ${files[@]}"
+    $MY_UTIL_COMMAND > my_util_result.txt
+    $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+    if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+    then
+        printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+        let "COUNTER++"
+        let "SUCCESS++"
+        printf "%s\n\n" "$COUNTER - SUCCESS"
+    else
+        printf "$RED%s\n" "$MY_UTIL_COMMAND"
+        let "COUNTER++"
+        let "FAIL++"
+        printf "$RED%s\n\n" "$COUNTER - FAIL"
+    fi
+    rm my_util_result.txt
+    rm original_util_result.txt
+done
+
+# 2 флага 1 файл
+
+for file in "${files[@]}"
+do
+    for flag1 in "${flags[@]}"
     do
-        for flag1 in "${flags[@]}"
+        for flag2 in "${flags[@]}"
         do
-            for flag2 in "${flags[@]}"
-            do
-                echo "$flag1 $flag2 $file1:"
-                ./my_cat "-$flag1" "-$flag2" "$file1" "$file2" > my_cat_output.txt
-                cat "-$flag1" "-$flag2" "$file1" "$file2" > cat_output.txt
-                if diff -q my_cat_output.txt cat_output.txt > /dev/null 2>&1;
+            if [[ "$flag1" != "$flag2" ]]
+            then
+                MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $file"
+                ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $file"
+                $MY_UTIL_COMMAND > my_util_result.txt
+                $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
                 then
+                    printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
                     let "COUNTER++"
                     let "SUCCESS++"
-                    echo "$COUNTER - Success"
+                    printf "%s\n\n" "$COUNTER - SUCCESS"
                 else
+                    printf "$RED%s\n" "$MY_UTIL_COMMAND"
                     let "COUNTER++"
                     let "FAIL++"
-                    echo "$COUNTER - Fail"
+                    printf "$RED%s\n\n" "$COUNTER - FAIL"
                 fi
-                rm my_cat_output.txt cat_output.txt
+                rm my_util_result.txt
+                rm original_util_result.txt
+            fi
+        done
+    done
+done
+
+# 2 флага и несколько файлов
+
+for flag1 in "${flags[@]}"
+do
+    for flag2 in "${flags[@]}"
+    do
+        if [[ "$flag1" != "$flag2" ]]
+        then
+            MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 ${files[@]}"
+            ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 ${files[@]}"
+            $MY_UTIL_COMMAND > my_util_result.txt
+            $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+            if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+            then
+                printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                let "COUNTER++"
+                let "SUCCESS++"
+                printf "%s\n\n" "$COUNTER - SUCCESS"
+            else
+                printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                let "COUNTER++"
+                let "FAIL++"
+                printf "$RED%s\n\n" "$COUNTER - FAIL"
+            fi
+            rm my_util_result.txt
+            rm original_util_result.txt
+        fi
+    done
+done
+
+# 3 флага 1 файл
+
+for file in "${files[@]}"
+do
+    for flag1 in "${flags[@]}"
+    do
+        for flag2 in "${flags[@]}"
+        do
+            for flag3 in "${flags[@]}"
+            do
+                if [[ "$flag1" != "$flag2" ]] && [[ "$flag1" != "$flag3" ]] && [[ "$flag2" != "$flag3" ]]
+                then
+                    MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $flag3 $file"
+                    ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $flag3 $file"
+                    $MY_UTIL_COMMAND > my_util_result.txt
+                    $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                    if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+                    then
+                        printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                        let "COUNTER++"
+                        let "SUCCESS++"
+                        printf "%s\n\n" "$COUNTER - SUCCESS"
+                    else
+                        printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                        let "COUNTER++"
+                        let "FAIL++"
+                        printf "$RED%s\n\n" "$COUNTER - FAIL"
+                    fi
+                    rm my_util_result.txt
+                    rm original_util_result.txt
+                fi
             done
         done
     done
 done
 
-# 2 files 3 flags
-for file1 in "${test_files[@]}"
+# 3 флага и несколько файлов
+
+for flag1 in "${flags[@]}"
 do
-    for file2 in "${test_files[@]}"
+    for flag2 in "${flags[@]}"
     do
-        for flag1 in "${flags[@]}"
+        for flag3 in "${flags[@]}"
         do
-            for flag2 in "${flags[@]}"
+            if [[ "$flag1" != "$flag2" ]] && [[ "$flag1" != "$flag3" ]] && [[ "$flag2" != "$flag3" ]]
+            then
+                MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $flag3 ${files[@]}"
+                ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $flag3 ${files[@]}"
+                $MY_UTIL_COMMAND > my_util_result.txt
+                $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+                then
+                    printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                    let "COUNTER++"
+                    let "SUCCESS++"
+                    printf "%s\n\n" "$COUNTER - SUCCESS"
+                else
+                    printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                    let "COUNTER++"
+                    let "FAIL++"
+                    printf "$RED%s\n\n" "$COUNTER - FAIL"
+                fi
+                rm my_util_result.txt
+                rm original_util_result.txt
+            fi
+        done
+    done
+done
+
+# 4 флага 1 файл
+
+for file in "${files[@]}"
+do
+    for flag1 in "${flags[@]}"
+    do
+        for flag2 in "${flags[@]}"
+        do
+            for flag3 in "${flags[@]}"
             do
-                for flag3 in "${flags[@]}"
+                for flag4 in "${flags[@]}"
                 do
-                    echo "$flag1 $flag2 $flag3 $file1:"
-                    ./my_cat "-$flag1" "-$flag2" "-$flag3" "$file1" "$file2" > my_cat_output.txt
-                    cat "-$flag1" "-$flag2" "-$flag3" "$file1" "$file2" > cat_output.txt
-                    if diff -q my_cat_output.txt cat_output.txt > /dev/null 2>&1;
+                    if 
+                    [[ "$flag1" != "$flag2" ]] && [[ "$flag1" != "$flag3" ]] && [[ "$flag2" != "$flag3" ]] && 
+                    [[ "$flag1" != "$flag4" ]] && [[ "$flag2" != "$flag4" ]] && [[ "$flag3" != "$flag4" ]]
                     then
-                        let "COUNTER++"
-                        let "SUCCESS++"
-                        echo "$COUNTER - Success"
-                    else
-                        let "COUNTER++"
-                        let "FAIL++"
-                        echo "$COUNTER - Fail"
+                        MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $file"
+                        ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $file"
+                        $MY_UTIL_COMMAND > my_util_result.txt
+                        $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                        if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+                        then
+                            printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                            let "COUNTER++"
+                            let "SUCCESS++"
+                            printf "%s\n\n" "$COUNTER - SUCCESS"
+                        else
+                            printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                            let "COUNTER++"
+                            let "FAIL++"
+                            printf "$RED%s\n\n" "$COUNTER - FAIL"
+                        fi
+                        rm my_util_result.txt
+                        rm original_util_result.txt
                     fi
-                    rm my_cat_output.txt cat_output.txt
                 done
             done
         done
     done
 done
 
-echo "RESULTS:"
-echo "Success: $SUCCESS/$COUNTER"
-echo "Fails: $FAIL/$COUNTER"
+# 4 флага и несколько файлов
+
+for flag1 in "${flags[@]}"
+do
+    for flag2 in "${flags[@]}"
+    do
+        for flag3 in "${flags[@]}"
+        do
+            for flag4 in "${flags[@]}"
+            do
+                if 
+                [[ "$flag1" != "$flag2" ]] && [[ "$flag1" != "$flag3" ]] && [[ "$flag2" != "$flag3" ]] && 
+                [[ "$flag1" != "$flag4" ]] && [[ "$flag2" != "$flag4" ]] && [[ "$flag3" != "$flag4" ]]
+                then
+                    MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $flag3 $flag4 ${files[@]}"
+                    ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $flag3 $flag4 ${files[@]}"
+                    $MY_UTIL_COMMAND > my_util_result.txt
+                    $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                    if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+                    then
+                        printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                        let "COUNTER++"
+                        let "SUCCESS++"
+                        printf "%s\n\n" "$COUNTER - SUCCESS"
+                    else
+                        printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                        let "COUNTER++"
+                        let "FAIL++"
+                        printf "$RED%s\n\n" "$COUNTER - FAIL"
+                    fi
+                    rm my_util_result.txt
+                    rm original_util_result.txt
+                fi
+            done
+        done
+    done
+done
+
+# 5 флагов 1 файл
+
+for file in "${files[@]}"
+do
+    for flag1 in "${flags[@]}"
+    do
+        for flag2 in "${flags[@]}"
+        do
+            for flag3 in "${flags[@]}"
+            do
+                for flag4 in "${flags[@]}"
+                do
+                    for flag5 in "${flags[@]}"
+                    do
+                        if 
+                        [[ "$flag1" != "$flag2" ]] && [[ "$flag1" != "$flag3" ]] && [[ "$flag2" != "$flag3" ]] && 
+                        [[ "$flag1" != "$flag4" ]] && [[ "$flag2" != "$flag4" ]] && [[ "$flag3" != "$flag4" ]] &&
+                        [[ "$flag1" != "$flag5" ]] && [[ "$flag2" != "$flag5" ]] && [[ "$flag3" != "$flag5" ]] &&
+                        [[ "$flag4" != "$flag5" ]]
+                        then
+                            MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $flag5 $file"
+                            ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $flag5 $file"
+                            $MY_UTIL_COMMAND > my_util_result.txt
+                            $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                            if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+                            then
+                                printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                                let "COUNTER++"
+                                let "SUCCESS++"
+                                printf "%s\n\n" "$COUNTER - SUCCESS"
+                            else
+                                printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                                let "COUNTER++"
+                                let "FAIL++"
+                                printf "$RED%s\n\n" "$COUNTER - FAIL"
+                            fi
+                            rm my_util_result.txt
+                            rm original_util_result.txt
+                        fi
+                    done
+                done
+            done
+        done
+    done
+done
+
+# 5 флагов и несколько файлов
+
+for flag1 in "${flags[@]}"
+do
+    for flag2 in "${flags[@]}"
+    do
+        for flag3 in "${flags[@]}"
+        do
+            for flag4 in "${flags[@]}"
+            do
+                for flag5 in "${flags[@]}"
+                do
+                    if 
+                    [[ "$flag1" != "$flag2" ]] && [[ "$flag1" != "$flag3" ]] && [[ "$flag2" != "$flag3" ]] && 
+                    [[ "$flag1" != "$flag4" ]] && [[ "$flag2" != "$flag4" ]] && [[ "$flag3" != "$flag4" ]] &&
+                    [[ "$flag1" != "$flag5" ]] && [[ "$flag2" != "$flag5" ]] && [[ "$flag3" != "$flag5" ]] &&
+                    [[ "$flag4" != "$flag5" ]]
+                    then
+                        MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $flag5 ${files[@]}"
+                        ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $flag5 ${files[@]}"
+                        $MY_UTIL_COMMAND > my_util_result.txt
+                        $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                        if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+                        then
+                            printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                            let "COUNTER++"
+                            let "SUCCESS++"
+                            printf "%s\n\n" "$COUNTER - SUCCESS"
+                        else
+                            printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                            let "COUNTER++"
+                            let "FAIL++"
+                            printf "$RED%s\n\n" "$COUNTER - FAIL"
+                        fi
+                        rm my_util_result.txt
+                        rm original_util_result.txt
+                    fi
+                done
+            done
+        done
+    done
+done
+
+# 6 флагов 1 файл
+
+for file in "${files[@]}"
+do
+    for flag1 in "${flags[@]}"
+    do
+        for flag2 in "${flags[@]}"
+        do
+            for flag3 in "${flags[@]}"
+            do
+                for flag4 in "${flags[@]}"
+                do
+                    for flag5 in "${flags[@]}"
+                    do
+                        for flag6 in "${flags[@]}"
+                        do
+                            if 
+                            [[ "$flag1" != "$flag2" ]] && [[ "$flag1" != "$flag3" ]] && [[ "$flag2" != "$flag3" ]] && 
+                            [[ "$flag1" != "$flag4" ]] && [[ "$flag2" != "$flag4" ]] && [[ "$flag3" != "$flag4" ]] &&
+                            [[ "$flag1" != "$flag5" ]] && [[ "$flag2" != "$flag5" ]] && [[ "$flag3" != "$flag5" ]] &&
+                            [[ "$flag4" != "$flag5" ]] && [[ "$flag1" != "$flag6" ]] && [[ "$flag2" != "$flag6" ]] &&
+                            [[ "$flag3" != "$flag6" ]] && [[ "$flag4" != "$flag6" ]] && [[ "$flag5" != "$flag6" ]]
+                            then
+                                MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $flag5 $flag6 $file"
+                                ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $flag5 $flag6 $file"
+                                $MY_UTIL_COMMAND > my_util_result.txt
+                                $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                                if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+                                then
+                                    printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                                    let "COUNTER++"
+                                    let "SUCCESS++"
+                                    printf "%s\n\n" "$COUNTER - SUCCESS"
+                                else
+                                    printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                                    let "COUNTER++"
+                                    let "FAIL++"
+                                    printf "$RED%s\n\n" "$COUNTER - FAIL"
+                                fi
+                                rm my_util_result.txt
+                                rm original_util_result.txt
+                            fi
+                        done
+                    done
+                done
+            done
+        done
+    done
+done
+
+# 6 флагов и несколько файлов
+
+for flag1 in "${flags[@]}"
+do
+    for flag2 in "${flags[@]}"
+    do
+        for flag3 in "${flags[@]}"
+        do
+            for flag4 in "${flags[@]}"
+            do
+                for flag5 in "${flags[@]}"
+                do
+                    for flag6 in "${flags[@]}"
+                    do
+                        if 
+                        [[ "$flag1" != "$flag2" ]] && [[ "$flag1" != "$flag3" ]] && [[ "$flag2" != "$flag3" ]] && 
+                        [[ "$flag1" != "$flag4" ]] && [[ "$flag2" != "$flag4" ]] && [[ "$flag3" != "$flag4" ]] &&
+                        [[ "$flag1" != "$flag5" ]] && [[ "$flag2" != "$flag5" ]] && [[ "$flag3" != "$flag5" ]] &&
+                        [[ "$flag4" != "$flag5" ]] && [[ "$flag1" != "$flag6" ]] && [[ "$flag2" != "$flag6" ]] &&
+                        [[ "$flag3" != "$flag6" ]] && [[ "$flag4" != "$flag6" ]] && [[ "$flag5" != "$flag6" ]]
+                        then
+                            MY_UTIL_COMMAND="./$MY_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $flag5 $flag6 ${files[@]}"
+                            ORIGINAL_UTIL_COMMAND="$ORIGINAL_UTIL_NAME $flag1 $flag2 $flag3 $flag4 $flag5 $flag6 ${files[@]}"
+                            $MY_UTIL_COMMAND > my_util_result.txt
+                            $ORIGINAL_UTIL_COMMAND > original_util_result.txt
+                            if diff -q my_util_result.txt original_util_result.txt >/dev/null 2>&1;
+                            then
+                                printf "$GREEN%s\n" "$MY_UTIL_COMMAND"
+                                let "COUNTER++"
+                                let "SUCCESS++"
+                                printf "%s\n\n" "$COUNTER - SUCCESS"
+                            else
+                                printf "$RED%s\n" "$MY_UTIL_COMMAND"
+                                let "COUNTER++"
+                                let "FAIL++"
+                                printf "$RED%s\n\n" "$COUNTER - FAIL"
+                            fi
+                            rm my_util_result.txt
+                            rm original_util_result.txt
+                        fi
+                    done
+                done
+            done
+        done
+    done
+done
+
+printf "$GREEN%s\n" "SUCCESS = $SUCCESS"
+printf "$RED%s\n" "FAIL = $FAIL"
